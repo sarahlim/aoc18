@@ -1,7 +1,8 @@
 module Day1Spec where
 
-import Test.Hspec
+import Control.Monad (foldM)
 import qualified Data.Set as S
+import Test.Hspec
 
 parseDelta :: String -> Integer
 parseDelta ('+':d) = read d
@@ -23,8 +24,20 @@ repeats xs = let init = 0
                                               in if S.member f' seen then f'
                                                  else repeatsHelper ds (S.insert f' seen) f'
 
+repeats' xs = fromLeft $ foldM accumulate (0, S.singleton 0) (cycle xs)
+  where
+    fromLeft (Left x) = x
+    fromLeft _ = error "impossible"
+
+    accumulate (total, seen) x =
+        if S.member total' seen
+           then Left total'
+           else Right (total', S.insert total' seen)
+      where
+        total' = total + x
+
 repeatsTest :: [String] -> Integer
-repeatsTest = repeats . (parseDelta <$>)
+repeatsTest = repeats' . (parseDelta <$>)
 
 spec :: Spec
 spec = do
